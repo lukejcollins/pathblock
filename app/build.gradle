@@ -32,7 +32,7 @@ android {
     }
 }
 
-configurations.matching { it.name.startsWith('lint') }.configureEach {
+configurations.matching { it.name == 'androidLintTool' }.configureEach {
     // Lint resolves a separate tool classpath from the Android Gradle plugin.
     resolutionStrategy.force(
         'com.google.guava:guava:33.7.2-jre',
