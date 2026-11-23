@@ -1,4 +1,4 @@
-plugins { id 'com.android.application' version '8.9.2' }
+plugins { id 'com.android.application' version '9.5.2' }
 android {
     namespace 'arpa.homelab.pathblock'
     compileSdk 35
