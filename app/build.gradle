@@ -1,4 +1,21 @@
-plugins { id 'com.android.application' version '8.9.2' }
+buildscript {
+    repositories {
+        google()
+        mavenCentral()
+    }
+    dependencies {
+        constraints {
+            // Patch transitive Android Gradle plugin dependencies on the build classpath.
+            classpath 'com.google.guava:guava:33.7.2-jre'
+            classpath 'org.bitbucket.b_c:jose4j:0.9.6'
+            classpath 'org.bouncycastle:bcpkix-jdk18on:1.85'
+            classpath 'org.bouncycastle:bcprov-jdk18on:1.85'
+            classpath 'org.bouncycastle:bcutil-jdk18on:1.85'
+            classpath 'org.jdom:jdom2:2.0.6.1'
+        }
+    }
+}
+plugins { id 'com.android.application' version '9.5.2' }
 android {
     namespace 'arpa.homelab.pathblock'
     compileSdk 35
@@ -13,4 +30,14 @@ android {
         sourceCompatibility JavaVersion.VERSION_17
         targetCompatibility JavaVersion.VERSION_17
     }
+}
+
+configurations.matching { it.name == 'androidLintTool' }.configureEach {
+    // Lint resolves a separate tool classpath from the Android Gradle plugin.
+    resolutionStrategy.force(
+        'com.google.guava:guava:33.7.2-jre',
+        'org.bouncycastle:bcpkix-jdk18on:1.85',
+        'org.bouncycastle:bcprov-jdk18on:1.85',
+        'org.bouncycastle:bcutil-jdk18on:1.85'
+    )
 }
