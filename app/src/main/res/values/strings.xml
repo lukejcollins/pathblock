@@ -1,0 +1,3 @@
+<resources>
+    <string name="guard_description">Reads Chrome’s address bar to match your local rules and covers matching pages. Does not prevent the underlying network request.</string>
+</resources>

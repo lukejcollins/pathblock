@@ -1,0 +1,16 @@
+plugins { id 'com.android.application' version '8.9.2' }
+android {
+    namespace 'arpa.homelab.pathblock'
+    compileSdk 35
+    defaultConfig {
+        applicationId 'arpa.homelab.pathblock'
+        minSdk 30
+        targetSdk 35
+        versionCode 22
+        versionName '1.21'
+    }
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
+    }
+}
