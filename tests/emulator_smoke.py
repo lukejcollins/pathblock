@@ -105,7 +105,8 @@ def main():
 
         shell("settings", "put", "secure", "enabled_accessibility_services", APP + "/.ChromeGuard")
         shell("settings", "put", "secure", "accessibility_enabled", "1")
-        wait(lambda: find("Guard on"), "Chrome guard did not bind")
+        wait(lambda: "Bound services:{Service[label=Pathblock for Chrome" in shell("dumpsys", "accessibility"),
+             "Chrome guard did not bind")
         open_chrome("/HEY/child")
         wait(shield, "Chrome did not show the shield for a case-insensitive subpath")
         launch()
