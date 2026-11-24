@@ -64,6 +64,18 @@ def open_chrome(path):
     assert "Status: ok" in result, result
 
 
+def allowed_page_visible():
+    for node in nodes():
+        if node.get("package") != CHROME:
+            continue
+        if node.get("text") == "No thanks":
+            tap(node)
+            return False
+        if node.get("text") == "Pathblock fixture":
+            return True
+    return False
+
+
 class Page(http.server.BaseHTTPRequestHandler):
     def do_GET(self):
         self.send_response(200)
@@ -113,7 +125,7 @@ def main():
         wait(shield, "Chrome did not show the shield for a case-insensitive subpath")
         launch()
         open_chrome("/heyday")
-        wait(lambda: find("Pathblock fixture"), "Chrome did not show the allowed sibling page")
+        wait(allowed_page_visible, "Chrome did not show the allowed sibling page", seconds=60)
         assert not shield(), "Chrome blocked a similarly named sibling"
         print("PASS: Chrome blocks the subpath and allows a similarly named sibling", flush=True)
 
