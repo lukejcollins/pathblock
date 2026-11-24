@@ -25,7 +25,7 @@ def wait(predicate, label, seconds=35):
     deadline = time.monotonic() + seconds
     while time.monotonic() < deadline:
         value = predicate()
-        if value:
+        if value is not None and value is not False:
             return value
         time.sleep(0.4)
     raise AssertionError(label)
