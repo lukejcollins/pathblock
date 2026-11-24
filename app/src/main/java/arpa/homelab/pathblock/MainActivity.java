@@ -33,6 +33,7 @@ import android.widget.LinearLayout;
 import android.widget.ScrollView;
 import android.widget.TextView;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -409,7 +410,9 @@ public final class MainActivity extends Activity {
         }
         long now = System.currentTimeMillis();
         long nextRefresh = Long.MAX_VALUE;
-        for (Rule rule : rules) {
+        List<Rule> sortedRules = new ArrayList<>(rules);
+        sortedRules.sort(Comparator.comparing(rule -> rule.address.label()));
+        for (Rule rule : sortedRules) {
             LinearLayout row = new LinearLayout(this);
             row.setGravity(Gravity.CENTER_VERTICAL);
             row.setPadding(design.dp(4), design.dp(7), design.dp(6), design.dp(7));

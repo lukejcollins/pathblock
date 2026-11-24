@@ -111,6 +111,15 @@ def main():
         assert version_code() > previous_code, "The replacement APK must have a higher version code"
         print("PASS: in-place upgrade retains rules", flush=True)
 
+        for address in ("zebra.example/news", "alpha.example/news"):
+            tap(wait(lambda: find("android.widget.EditText", "class"), "URL input did not appear"))
+            shell("input", "text", address)
+            tap(wait(lambda: find("Add rule", "content-desc"), "Add button missing"))
+            wait(lambda: find(address), "New rule did not appear")
+        expected = [saved_rule, "alpha.example/news", "zebra.example/news"]
+        assert [node.get("text") for node in nodes() if node.get("text") in expected] == expected
+        print("PASS: rules display in alphabetical order", flush=True)
+
         adb("install", "app/build/outputs/apk/androidTest/debug/app-debug-androidTest.apk")
         result = shell("am", "instrument", "-w", "-r", APP + ".test/" + APP + ".RuleChecks")
         assert "PASS: 13 rule checks" in result and "INSTRUMENTATION_CODE: -1" in result, result
