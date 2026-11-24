@@ -99,7 +99,7 @@ def main():
         print("PASS: in-place upgrade retains rules", flush=True)
 
         adb("install", "app/build/outputs/apk/androidTest/debug/app-debug-androidTest.apk")
-        result = shell("am", "instrument", "-w", APP + ".test/" + APP + ".RuleChecks")
+        result = shell("am", "instrument", "-w", "-r", APP + ".test/" + APP + ".RuleChecks")
         assert "PASS: 13 rule checks" in result and "INSTRUMENTATION_CODE: -1" in result, result
         print(result, flush=True)
 
