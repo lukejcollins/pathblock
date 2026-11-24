@@ -3,7 +3,7 @@
   <h1>Pathblock</h1>
   <p>Block distracting sites and specific URL paths in Chrome for Android.</p>
   <a href="https://github.com/lukejcollins/pathblock/releases/latest">
-    <img src="https://img.shields.io/github/v/release/lukejcollins/pathblock?label=Download%20APK&color=6e59a5" alt="Download the latest APK">
+    <img src="docs/download-apk.svg" width="122" height="28" alt="Download the latest APK">
   </a>
   <a href="https://github.com/lukejcollins/pathblock/actions/workflows/android.yml">
     <img src="https://github.com/lukejcollins/pathblock/actions/workflows/android.yml/badge.svg" alt="Android CI">
