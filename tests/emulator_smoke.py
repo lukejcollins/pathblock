@@ -89,6 +89,7 @@ def main():
         threading.Thread(target=server.serve_forever, daemon=True).start()
         adb("reverse", f"tcp:{PORT}", f"tcp:{PORT}")
         assert CHROME in shell("pm", "list", "packages", CHROME), "Chrome is missing from the emulator image"
+        shell("pm", "grant", CHROME, "android.permission.POST_NOTIFICATIONS")
         shell("am", "set-debug-app", "--persistent", CHROME)
         shell("sh", "-c", "echo 'chrome --disable-fre --no-default-browser-check' > /data/local/tmp/chrome-command-line")
         shell("am", "force-stop", CHROME)
@@ -121,6 +122,8 @@ def main():
         shell("settings", "put", "secure", "accessibility_enabled", "1")
         wait(lambda: "Bound services:{Service[label=Pathblock for Chrome" in shell("dumpsys", "accessibility"),
              "Chrome guard did not bind")
+        open_chrome("/welcome")
+        wait(allowed_page_visible, "Chrome did not finish first-run setup", seconds=60)
         open_chrome("/HEY/child")
         wait(shield, "Chrome did not show the shield for a case-insensitive subpath")
         launch()
