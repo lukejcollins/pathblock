@@ -103,6 +103,8 @@ def main():
         assert "PASS: 13 rule checks" in result and "INSTRUMENTATION_CODE: -1" in result, result
         print(result, flush=True)
 
+        launch()
+        shell("settings", "delete", "secure", "enabled_accessibility_services")
         shell("settings", "put", "secure", "enabled_accessibility_services", APP + "/.ChromeGuard")
         shell("settings", "put", "secure", "accessibility_enabled", "1")
         wait(lambda: "Bound services:{Service[label=Pathblock for Chrome" in shell("dumpsys", "accessibility"),
