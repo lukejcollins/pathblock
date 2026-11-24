@@ -32,6 +32,7 @@ def wait(predicate, label, seconds=35):
 
 
 def nodes():
+    shell("rm", "-f", "/sdcard/pathblock-ci.xml")
     output = shell("uiautomator", "dump", "/sdcard/pathblock-ci.xml")
     if "dumped to" not in output:
         return []
@@ -80,9 +81,11 @@ def main():
         shell("sh", "-c", "echo 'chrome --disable-fre --no-default-browser-check' > /data/local/tmp/chrome-command-line")
         shell("am", "force-stop", CHROME)
         shell("settings", "put", "secure", "show_ime_with_hard_keyboard", "0")
+        shell("input", "keyevent", "KEYCODE_WAKEUP")
+        shell("wm", "dismiss-keyguard")
         adb("install", "/tmp/pathblock-previous.apk")
         launch()
-        tap(wait(lambda: find("example.com/path"), "URL input did not appear"))
+        tap(wait(lambda: find("android.widget.EditText", "class"), "URL input did not appear"))
         shell("input", "text", BASE + "/hey/")
         tap(wait(lambda: find("Add rule", "content-desc"), "Add button missing"))
         saved_rule = f"127.0.0.1:{PORT}/hey"
@@ -113,4 +116,8 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    try:
+        main()
+    except Exception:
+        print([(n.get("package"), n.get("class"), n.get("text"), n.get("content-desc")) for n in nodes()], flush=True)
+        raise
