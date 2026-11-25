@@ -23,7 +23,7 @@ Rules are case-insensitive. Pause a rule for 5, 10, or 20 minutes after a brief 
 
 1. Download the signed APK from the [latest release](https://github.com/lukejcollins/pathblock/releases/latest) and open it on an Android 11 or newer device.
 2. If prompted, allow your browser or file manager to install the APK.
-3. Open Pathblock, tap the guard status, and enable **Pathblock for Chrome** in Android Accessibility settings. If Android labels it a restricted setting, go to Pathblock's **App info**, open the overflow menu, and choose **Allow restricted settings** if available. Then return to Accessibility.
+3. Open Pathblock and tap **Enable guard**. Read the disclosure and choose **Agree and continue** if you want to enable **Pathblock for Chrome** in Android Accessibility settings. If Android labels it a restricted setting, go to Pathblock's **App info**, open the overflow menu, and choose **Allow restricted settings** if available. Then return to Accessibility.
 
 ## Update from your phone
 
@@ -33,7 +33,7 @@ Tap **Download and install** when a new version is available and confirm through
 
 ## Privacy
 
-Pathblock's Accessibility service reads Chrome's address bar to compare it with rules stored on your phone. Update checks contact GitHub for release information. Pathblock keeps your browsing URLs and rules on the device.
+With your consent, Pathblock's Accessibility service reads Chrome's address bar and compares the URL with rules stored on your phone. On a match, it covers the page and may replace it with a local block screen. Tap the guard control in Pathblock to stop monitoring at any time. Update checks contact GitHub for release information. Pathblock keeps your browsing URLs and rules on the device.
 
 ## Build and test
 

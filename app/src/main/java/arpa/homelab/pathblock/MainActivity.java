@@ -117,7 +117,7 @@ public final class MainActivity extends Activity {
         title.setAccessibilityHeading(true);
         header.addView(title, new LinearLayout.LayoutParams(0, -2, 1));
         guard = design.button("", design.raised, design.accent);
-        guard.setOnClickListener(view -> startActivity(new Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS)));
+        guard.setOnClickListener(view -> showGuardControls());
         header.addView(guard);
         ImageButton settings = design.icon(R.drawable.ic_settings, design.foreground, "Settings");
         settings.setOnClickListener(view -> startActivity(new Intent(this, UpdateSettings.class)));
@@ -210,17 +210,69 @@ public final class MainActivity extends Activity {
 
     @Override protected void onResume() {
         super.onResume();
-        ComponentName component = new ComponentName(this, ChromeGuard.class);
-        AccessibilityManager manager = getSystemService(AccessibilityManager.class);
-        boolean enabled = manager.getEnabledAccessibilityServiceList(-1).stream()
-                .map(info -> info.getResolveInfo().serviceInfo)
-                .anyMatch(info -> component.equals(new ComponentName(info.packageName, info.name)));
-        guard.setText(enabled ? "Guard on" : "Enable guard");
-        guard.setContentDescription(enabled ? "Chrome guard on. Open accessibility settings"
-                : "Enable Chrome guard in accessibility settings");
-        guard.setTextColor(enabled ? design.accent : design.danger);
+        updateGuardButton();
         rules = RuleStore.read(this);
         refreshRules();
+    }
+
+    private boolean systemGuardEnabled() {
+        ComponentName component = new ComponentName(this, ChromeGuard.class);
+        AccessibilityManager manager = getSystemService(AccessibilityManager.class);
+        return manager.getEnabledAccessibilityServiceList(-1).stream()
+                .map(info -> info.getResolveInfo().serviceInfo)
+                .anyMatch(info -> component.equals(new ComponentName(info.packageName, info.name)));
+    }
+
+    private void updateGuardButton() {
+        boolean enabled = RuleStore.hasGuardConsent(this) && systemGuardEnabled();
+        guard.setText(enabled ? "Guard on" : "Enable guard");
+        guard.setContentDescription(enabled ? "Chrome guard on. Manage Chrome guard" : "Enable Chrome guard");
+        guard.setTextColor(enabled ? design.accent : design.danger);
+    }
+
+    private void showGuardControls() {
+        boolean consent = RuleStore.hasGuardConsent(this);
+        boolean systemEnabled = systemGuardEnabled();
+        Dialog dialog = new Dialog(this);
+        LinearLayout content = sheet(consent && systemEnabled ? "Chrome guard" : "Enable Chrome guard");
+        spaced(content, design.text(
+                "Pathblock uses Android Accessibility to read the address shown in Chrome and compare it with your rules. "
+                        + "When a rule matches, Pathblock covers the page and may open its local block page in Chrome.",
+                16, design.foreground, false), 12);
+        spaced(content, design.text(
+                "Browsing URLs and rules stay on your phone. You can turn off monitoring here or disable Pathblock in Android Accessibility settings.",
+                15, design.muted, false), 10);
+
+        if (!consent) {
+            Button agree = design.button("Agree and continue", design.raised, design.accent);
+            spaced(content, agree, 16);
+            agree.setOnClickListener(view -> {
+                RuleStore.setGuardConsent(this, true);
+                dialog.dismiss();
+                updateGuardButton();
+                if (!systemEnabled) startActivity(new Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS));
+            });
+        } else {
+            Button settings = design.button("Open Accessibility settings", design.raised, design.accent);
+            spaced(content, settings, 16);
+            settings.setOnClickListener(view -> {
+                dialog.dismiss();
+                startActivity(new Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS));
+            });
+            Button off = design.button("Turn off monitoring", design.raised, design.foreground);
+            spaced(content, off, 8);
+            off.setOnClickListener(view -> {
+                RuleStore.setGuardConsent(this, false);
+                dialog.dismiss();
+                updateGuardButton();
+            });
+        }
+        Button cancel = design.button("Cancel", design.surface, design.foreground);
+        cancel.setStateListAnimator(null);
+        cancel.setElevation(0);
+        spaced(content, cancel, 8);
+        cancel.setOnClickListener(view -> dialog.cancel());
+        showSheet(dialog, content);
     }
 
     @Override protected void onPause() {

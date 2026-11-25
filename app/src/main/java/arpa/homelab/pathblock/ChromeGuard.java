@@ -72,12 +72,17 @@ public final class ChromeGuard extends AccessibilityService {
 
     private void inspectChrome() {
         handler.removeCallbacks(refresh);
+        handler.removeCallbacks(expiry);
+        if (!RuleStore.hasGuardConsent(this)) {
+            lastAddress = null;
+            dismissOverlay();
+            return;
+        }
         long now = System.currentTimeMillis();
         if (returnButton != null && retryAt != 0 && SystemClock.uptimeMillis() >= retryAt) {
             retryAt = 0;
             returnButton.setText("Try again");
         }
-        handler.removeCallbacks(expiry);
         long next = rules.stream().mapToLong(rule -> rule.pausedUntil)
                 .filter(deadline -> deadline > now).min().orElse(0);
         if (next > 0) handler.postDelayed(expiry, next - now);

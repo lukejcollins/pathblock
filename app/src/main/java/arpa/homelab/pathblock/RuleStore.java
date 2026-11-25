@@ -11,9 +11,18 @@ import org.json.JSONObject;
 final class RuleStore {
     private static final String FILE = "pathblock";
     private static final String KEY = "rules";
+    private static final String GUARD_CONSENT = "guard_consent";
 
     static SharedPreferences preferences(Context context) {
         return context.getSharedPreferences(FILE, Context.MODE_PRIVATE);
+    }
+
+    static boolean hasGuardConsent(Context context) {
+        return preferences(context).getBoolean(GUARD_CONSENT, false);
+    }
+
+    static void setGuardConsent(Context context, boolean consent) {
+        preferences(context).edit().putBoolean(GUARD_CONSENT, consent).apply();
     }
 
     static List<Rule> read(Context context) {

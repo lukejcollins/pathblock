@@ -77,7 +77,7 @@ public final class UpdateSettings extends Activity {
                 {android.R.attr.state_checked}, {}}, new int[]{design.accent, design.muted}));
         automatic.setChecked(Updates.settings(this).getBoolean(Updates.AUTO, true));
         card.addView(automatic, new LinearLayout.LayoutParams(-1, -2));
-        TextView summary = design.text("Checks for new releases about once a day.", 14, design.muted, false);
+        TextView summary = design.text("Contacts GitHub about once a day for release information. Downloads start when you tap Download and install. Android asks you to confirm installation.", 14, design.muted, false);
         card.addView(summary);
         notificationSettings = design.button("", design.raised, design.foreground);
         LinearLayout.LayoutParams notificationLayout = new LinearLayout.LayoutParams(-1, -2);
