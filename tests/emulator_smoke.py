@@ -151,6 +151,14 @@ def main():
         wait(allowed_page_visible, "Chrome did not show the allowed sibling page", seconds=60)
         assert not shield(), "Chrome blocked a similarly named sibling"
         print("PASS: Chrome blocks the subpath and allows a similarly named sibling", flush=True)
+        launch()
+        tap(wait(lambda: find("Chrome guard on. Manage Chrome guard", "content-desc"), "Guard settings were missing"))
+        tap(wait(lambda: find("Turn off monitoring"), "Opt-out action was missing"))
+        wait(lambda: find("Enable Chrome guard", "content-desc"), "Opt-out did not update guard status")
+        open_chrome("/hey/after-opt-out")
+        wait(allowed_page_visible, "Chrome should remain usable after opt-out", seconds=60)
+        assert not shield(), "Chrome was monitored after consent was withdrawn"
+        print("PASS: monitoring stops after consent is withdrawn", flush=True)
 
 
 if __name__ == "__main__":
