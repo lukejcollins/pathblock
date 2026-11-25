@@ -6,6 +6,7 @@ buildscript {
     dependencies {
         constraints {
             // Patch transitive Android Gradle plugin dependencies on the build classpath.
+            classpath 'org.jetbrains.kotlin:kotlin-gradle-plugin:2.4.21'
             classpath 'com.google.guava:guava:33.7.2-jre'
             classpath 'org.apache.commons:commons-lang3:3.18.0'
             classpath 'org.apache.httpcomponents:httpclient:4.5.14'
@@ -25,8 +26,8 @@ android {
         applicationId 'arpa.homelab.pathblock'
         minSdk 30
         targetSdk 35
-        versionCode 24
-        versionName '1.23'
+        versionCode 25
+        versionName '1.24'
         testInstrumentationRunner 'arpa.homelab.pathblock.RuleChecks'
     }
     compileOptions {
