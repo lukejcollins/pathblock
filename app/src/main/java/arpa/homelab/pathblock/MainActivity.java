@@ -312,6 +312,8 @@ public final class MainActivity extends Activity {
             });
         }
         Button cancel = design.button("Cancel", design.surface, design.foreground);
+        cancel.setStateListAnimator(null);
+        cancel.setElevation(0);
         spaced(content, cancel, 8);
         cancel.setOnClickListener(view -> dialog.cancel());
         CountDownTimer timer = new CountDownTimer(PAUSE_DELAY_MS, 1_000) {
