@@ -3,7 +3,6 @@
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE"/>
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED"/>
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS"/>
-    <uses-permission android:name="android.permission.REQUEST_INSTALL_PACKAGES"/>
     <application android:label="Pathblock" android:icon="@mipmap/pathblock_icon" android:roundIcon="@mipmap/pathblock_icon" android:enableOnBackInvokedCallback="false" android:allowBackup="false" android:theme="@android:style/Theme.Material.NoActionBar">
         <activity android:name=".MainActivity" android:exported="true">
             <intent-filter>
@@ -12,7 +11,6 @@
             </intent-filter>
         </activity>
         <activity android:name=".UpdateSettings" android:exported="false"/>
-        <receiver android:name=".UpdateInstall" android:exported="false"/>
         <service android:name=".Updates" android:exported="true"
             android:permission="android.permission.BIND_JOB_SERVICE"/>
         <provider android:name=".BlockPageProvider"
