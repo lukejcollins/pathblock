@@ -4,9 +4,11 @@ import android.app.Activity;
 import android.app.Dialog;
 import android.graphics.Color;
 import android.graphics.drawable.ColorDrawable;
+import android.content.ActivityNotFoundException;
 import android.content.ComponentName;
 import android.content.Intent;
 import android.content.res.ColorStateList;
+import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.CountDownTimer;
@@ -32,6 +34,7 @@ import android.widget.ImageButton;
 import android.widget.LinearLayout;
 import android.widget.ScrollView;
 import android.widget.TextView;
+import android.widget.Toast;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashSet;
@@ -40,6 +43,14 @@ import java.util.Set;
 import java.util.concurrent.ThreadLocalRandom;
 
 public final class MainActivity extends Activity {
+    private static final String GUARD_SETUP_STEP = "guard_setup_step";
+    private static final String GUARD_SETUP_DESTINATION = "guard_setup_destination";
+    private static final int TRY_ACCESSIBILITY = 1;
+    private static final int OPEN_APP_INFO = 2;
+    private static final int CONFIRM_APP_INFO = 3;
+    private static final int ENABLE_ACCESSIBILITY = 4;
+    private int guardSetupDestination;
+
     private static final long PAUSE_DELAY_MS = 10_000;
     private static final PauseQuote[] PAUSE_QUOTES = {
         new PauseQuote("My experience is what I agree to attend to.", "William James · The Principles of Psychology, ch. 11", "Is this what you want to give your attention to?"),
@@ -95,6 +106,9 @@ public final class MainActivity extends Activity {
 
     @Override public void onCreate(Bundle state) {
         super.onCreate(state);
+        if (state != null) {
+            guardSetupDestination = state.getInt(GUARD_SETUP_DESTINATION);
+        }
         if (Build.VERSION.SDK_INT >= 33) setRecentsScreenshotEnabled(false);
         design = new Design(this);
         LinearLayout body = design.column();
@@ -211,8 +225,38 @@ public final class MainActivity extends Activity {
     @Override protected void onResume() {
         super.onResume();
         updateGuardButton();
+        if (systemGuardEnabled()) {
+            setGuardSetupStep(TRY_ACCESSIBILITY);
+        }
+        if (guardSetupDestination != 0) {
+            int destination = guardSetupDestination;
+            guardSetupDestination = 0;
+            if (RuleStore.hasGuardConsent(this) && !systemGuardEnabled()) {
+                if (destination == TRY_ACCESSIBILITY) {
+                    setGuardSetupStep(OPEN_APP_INFO);
+                } else if (destination == OPEN_APP_INFO && guardSetupStep() == OPEN_APP_INFO) {
+                    setGuardSetupStep(CONFIRM_APP_INFO);
+                }
+                showGuardSetup();
+            }
+        }
         rules = RuleStore.read(this);
         refreshRules();
+    }
+
+    @Override protected void onSaveInstanceState(Bundle state) {
+        super.onSaveInstanceState(state);
+        state.putInt(GUARD_SETUP_DESTINATION, guardSetupDestination);
+    }
+
+    private int guardSetupStep() {
+        return RuleStore.preferences(this).getInt(GUARD_SETUP_STEP, TRY_ACCESSIBILITY);
+    }
+
+    private void setGuardSetupStep(int step) {
+        if (guardSetupStep() != step) {
+            RuleStore.preferences(this).edit().putInt(GUARD_SETUP_STEP, step).apply();
+        }
     }
 
     private boolean systemGuardEnabled() {
@@ -233,6 +277,10 @@ public final class MainActivity extends Activity {
     private void showGuardControls() {
         boolean consent = RuleStore.hasGuardConsent(this);
         boolean systemEnabled = systemGuardEnabled();
+        if (consent && !systemEnabled) {
+            showGuardSetup();
+            return;
+        }
         Dialog dialog = new Dialog(this);
         LinearLayout content = sheet(consent && systemEnabled ? "Chrome guard" : "Enable Chrome guard");
         spaced(content, design.text(
@@ -250,7 +298,7 @@ public final class MainActivity extends Activity {
                 RuleStore.setGuardConsent(this, true);
                 dialog.dismiss();
                 updateGuardButton();
-                if (!systemEnabled) startActivity(new Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS));
+                if (!systemEnabled) showGuardSetup();
             });
         } else {
             Button settings = design.button("Open Accessibility settings", design.raised, design.accent);
@@ -263,6 +311,7 @@ public final class MainActivity extends Activity {
             spaced(content, off, 8);
             off.setOnClickListener(view -> {
                 RuleStore.setGuardConsent(this, false);
+                setGuardSetupStep(TRY_ACCESSIBILITY);
                 dialog.dismiss();
                 updateGuardButton();
             });
@@ -273,6 +322,71 @@ public final class MainActivity extends Activity {
         spaced(content, cancel, 8);
         cancel.setOnClickListener(view -> dialog.cancel());
         showSheet(dialog, content);
+    }
+
+    private void showGuardSetup() {
+        int step = guardSetupStep();
+        Dialog dialog = new Dialog(this);
+        LinearLayout content = sheet("Set up Chrome guard");
+        Intent accessibility = new Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS);
+        Intent appInfo = new Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS,
+                Uri.fromParts("package", getPackageName(), null));
+
+        addGuardSetupStep(content, "1. Try enabling Pathblock",
+                "In Accessibility, choose Pathblock for Chrome and try turning it on. If Android shows a restricted setting warning, go back to Pathblock.",
+                "Open Accessibility", step == TRY_ACCESSIBILITY,
+                () -> openGuardSetupSettings(dialog, accessibility, TRY_ACCESSIBILITY));
+        addGuardSetupStep(content, "2. Allow restricted settings",
+                "In Pathblock’s App info, open the three-dot menu and tap Allow restricted settings if it appears. Then go back to Pathblock.",
+                "Open Pathblock App info", step >= OPEN_APP_INFO,
+                () -> openGuardSetupSettings(dialog, appInfo, OPEN_APP_INFO));
+        if (step == CONFIRM_APP_INFO) {
+            Button confirm = design.button("Continue to step 3", design.raised, design.accent);
+            spaced(content, confirm, 8);
+            confirm.setOnClickListener(view -> {
+                setGuardSetupStep(ENABLE_ACCESSIBILITY);
+                dialog.dismiss();
+                showGuardSetup();
+            });
+        }
+        addGuardSetupStep(content, "3. Turn on Chrome guard",
+                "Return to Accessibility and turn on Pathblock for Chrome. The guard status updates automatically when you come back.",
+                "Return to Accessibility", step == ENABLE_ACCESSIBILITY,
+                () -> openGuardSetupSettings(dialog, accessibility, ENABLE_ACCESSIBILITY));
+
+        Button off = design.button("Turn off monitoring", design.surface, design.foreground);
+        off.setStateListAnimator(null);
+        spaced(content, off, 12);
+        off.setOnClickListener(view -> {
+            RuleStore.setGuardConsent(this, false);
+            setGuardSetupStep(TRY_ACCESSIBILITY);
+            dialog.dismiss();
+            updateGuardButton();
+        });
+        showSheet(dialog, content);
+    }
+
+    private void addGuardSetupStep(LinearLayout content, String title, String description,
+            String action, boolean enabled, Runnable openSettings) {
+        TextView heading = design.text(title, 16, design.foreground, true);
+        heading.setAccessibilityHeading(true);
+        spaced(content, heading, 14);
+        spaced(content, design.text(description, 14, design.muted, false), 4);
+        Button button = design.button(action, design.raised, enabled ? design.accent : design.muted);
+        button.setAlpha(enabled ? 1f : .55f);
+        button.setEnabled(enabled);
+        spaced(content, button, 8);
+        button.setOnClickListener(view -> openSettings.run());
+    }
+
+    private void openGuardSetupSettings(Dialog dialog, Intent intent, int destination) {
+        try {
+            startActivity(intent);
+            guardSetupDestination = destination;
+            dialog.dismiss();
+        } catch (ActivityNotFoundException error) {
+            Toast.makeText(this, "Open this page from Android Settings.", Toast.LENGTH_LONG).show();
+        }
     }
 
     @Override protected void onPause() {

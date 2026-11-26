@@ -48,6 +48,36 @@ def tap(node):
     shell("input", "tap", str((x1 + x2) // 2), str((y1 + y2) // 2))
 
 
+def check_guard_setup():
+    shell("settings", "delete", "secure", "enabled_accessibility_services")
+    shell("settings", "put", "secure", "accessibility_enabled", "0")
+    launch()
+    tap(wait(lambda: find("Enable Chrome guard", "content-desc"), "Setup entry point missing"))
+    tap(wait(lambda: find("Agree and continue"), "Consent action missing"))
+    app_info = wait(lambda: find("Open Pathblock App info"), "App info action missing")
+    assert app_info.get("enabled") == "false", "Step two was enabled before visiting Accessibility"
+    tap(wait(lambda: find("Open Accessibility"), "Accessibility action missing"))
+    wait(lambda: find("com.android.settings", "package"), "Did not open Android Accessibility")
+    shell("input", "keyevent", "KEYCODE_BACK")
+
+    app_info = wait(lambda: find("Open Pathblock App info"), "Setup did not resume at step two")
+    assert app_info.get("enabled") == "true", "Step two was not unlocked"
+    tap(app_info)
+    wait(lambda: find("App info"), "Did not open Pathblock’s App info")
+    shell("input", "keyevent", "KEYCODE_BACK")
+    tap(wait(lambda: find("Continue to step 3"), "Step two confirmation missing"))
+
+    final_step = wait(lambda: find("Return to Accessibility"), "Step three action missing")
+    assert final_step.get("enabled") == "true", "Step three was not unlocked"
+    tap(final_step)
+    wait(lambda: find("com.android.settings", "package"), "Did not return to Android Accessibility")
+    shell("settings", "put", "secure", "enabled_accessibility_services", APP + "/.ChromeGuard")
+    shell("settings", "put", "secure", "accessibility_enabled", "1")
+    shell("input", "keyevent", "KEYCODE_BACK")
+    wait(lambda: find("Guard on"), "Setup did not detect that Android enabled Pathblock")
+    print("PASS: guided setup opens both Android settings screens and detects guard activation", flush=True)
+
+
 def shield():
     return any("Pathblock shield" in line and "Window{" in line
                for line in shell("dumpsys", "window", "windows").splitlines())
@@ -159,6 +189,7 @@ def main():
         wait(allowed_page_visible, "Chrome should remain usable after opt-out", seconds=60)
         assert not shield(), "Chrome was monitored after consent was withdrawn"
         print("PASS: monitoring stops after consent is withdrawn", flush=True)
+        check_guard_setup()
 
 
 if __name__ == "__main__":
