@@ -68,6 +68,13 @@ def check_guard_setup():
 
     final_step = wait(lambda: find("Return to Accessibility"), "Step three action missing")
     assert final_step.get("enabled") == "true", "Step three was not unlocked"
+    reopen_accessibility = wait(lambda: find("Reopen Accessibility"), "Step one retry missing")
+    assert reopen_accessibility.get("enabled") == "true", "Completed step one was disabled"
+    tap(reopen_accessibility)
+    wait(lambda: find("com.android.settings", "package"), "Step one retry did not open Accessibility")
+    shell("input", "keyevent", "KEYCODE_BACK")
+    final_step = wait(lambda: find("Return to Accessibility"), "Step one retry lost step three")
+    assert final_step.get("enabled") == "true", "Reopening step one reset progress"
     tap(final_step)
     wait(lambda: find("com.android.settings", "package"), "Did not return to Android Accessibility")
     shell("input", "keyevent", "KEYCODE_BACK")

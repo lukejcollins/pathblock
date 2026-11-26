@@ -231,7 +231,7 @@ public final class MainActivity extends Activity {
             int destination = guardSetupDestination;
             guardSetupDestination = 0;
             if (RuleStore.hasGuardConsent(this) && !systemGuardEnabled()) {
-                if (destination == TRY_ACCESSIBILITY) {
+                if (destination == TRY_ACCESSIBILITY && guardSetupStep() == TRY_ACCESSIBILITY) {
                     setGuardSetupStep(OPEN_APP_INFO);
                 } else if (destination == OPEN_APP_INFO && guardSetupStep() == OPEN_APP_INFO) {
                     setGuardSetupStep(ENABLE_ACCESSIBILITY);
@@ -333,16 +333,17 @@ public final class MainActivity extends Activity {
 
         addGuardSetupStep(content, "1. Try enabling Pathblock",
                 "In Accessibility, choose Pathblock for Chrome and try turning it on. If Android shows a restricted setting warning, go back to Pathblock.",
-                "Open Accessibility", step == TRY_ACCESSIBILITY,
+                step > TRY_ACCESSIBILITY ? "Reopen Accessibility" : "Open Accessibility",
+                TRY_ACCESSIBILITY, step,
                 () -> openGuardSetupSettings(dialog, accessibility, TRY_ACCESSIBILITY));
         addGuardSetupStep(content, "2. Allow restricted settings",
                 "In Pathblock’s App info, open the three-dot menu and tap Allow restricted settings if it appears. Then go back to Pathblock.",
                 step >= ENABLE_ACCESSIBILITY ? "Reopen Pathblock App info" : "Open Pathblock App info",
-                step >= OPEN_APP_INFO,
+                OPEN_APP_INFO, step,
                 () -> openGuardSetupSettings(dialog, appInfo, OPEN_APP_INFO));
         addGuardSetupStep(content, "3. Turn on Chrome guard",
                 "Return to Accessibility and turn on Pathblock for Chrome. If it is still restricted, reopen Pathblock App info above.",
-                "Return to Accessibility", step >= ENABLE_ACCESSIBILITY,
+                "Return to Accessibility", ENABLE_ACCESSIBILITY, step,
                 () -> openGuardSetupSettings(dialog, accessibility, ENABLE_ACCESSIBILITY));
 
         Button off = design.button("Turn off monitoring", design.surface, design.foreground);
@@ -358,12 +359,16 @@ public final class MainActivity extends Activity {
     }
 
     private void addGuardSetupStep(LinearLayout content, String title, String description,
-            String action, boolean enabled, Runnable openSettings) {
+            String action, int step, int currentStep, Runnable openSettings) {
         TextView heading = design.text(title, 16, design.foreground, true);
         heading.setAccessibilityHeading(true);
         spaced(content, heading, 14);
         spaced(content, design.text(description, 14, design.muted, false), 4);
-        Button button = design.button(action, design.raised, enabled ? design.accent : design.muted);
+        boolean enabled = step <= currentStep;
+        boolean completed = step < currentStep;
+        int fill = completed ? design.secondaryButton : design.raised;
+        int textColor = completed ? design.foreground : design.accent;
+        Button button = design.button(action, fill, enabled ? textColor : design.muted);
         button.setAlpha(enabled ? 1f : .55f);
         button.setEnabled(enabled);
         spaced(content, button, 8);
