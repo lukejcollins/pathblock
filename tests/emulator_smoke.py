@@ -48,6 +48,33 @@ def tap(node):
     shell("input", "tap", str((x1 + x2) // 2), str((y1 + y2) // 2))
 
 
+def check_update_controls():
+    shell("pm", "grant", APP, "android.permission.POST_NOTIFICATIONS")
+    launch()
+    tap(wait(lambda: find("Settings", "content-desc"), "Settings button missing"))
+    label = "Notify me about updates"
+    toggle = wait(lambda: find(label), "Combined update toggle missing")
+    assert toggle.get("checked") == "true", "Existing automatic-update default was lost"
+    tap(toggle)
+
+    def toggle_state(checked):
+        node = find(label)
+        return node is not None and node.get("checked") == checked
+
+    wait(lambda: toggle_state("false"), "Update notification toggle did not turn off")
+
+    def manual_check_ready():
+        node = find("Check for updates")
+        return node if node is not None and node.get("enabled") == "true" else None
+
+    tap(wait(manual_check_ready, "Manual check was unavailable with notifications off"))
+    wait(manual_check_ready, "Manual check did not finish with notifications off")
+    tap(wait(lambda: find(label), "Combined update toggle disappeared"))
+    wait(lambda: toggle_state("true"), "Update notification toggle did not turn on")
+    shell("input", "keyevent", "KEYCODE_BACK")
+    print("PASS: update notifications can be toggled independently of manual checks", flush=True)
+
+
 def check_guard_setup():
     shell("settings", "delete", "secure", "enabled_accessibility_services")
     shell("settings", "put", "secure", "accessibility_enabled", "0")
@@ -202,6 +229,7 @@ def main():
         assert not shield(), "Chrome was monitored after consent was withdrawn"
         print("PASS: monitoring stops after consent is withdrawn", flush=True)
         check_guard_setup()
+        check_update_controls()
 
 
 if __name__ == "__main__":

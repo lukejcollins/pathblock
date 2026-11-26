@@ -27,7 +27,7 @@ Rules are case-insensitive. Pause a rule for 5, 10, or 20 minutes after a brief 
 
 ## Update from your phone
 
-Open **Settings** in Pathblock to check immediately. Background checks are on by default and run about once a day. Enable update notifications in Settings if you want an alert.
+Open **Settings** in Pathblock to check immediately. Turn on **Notify me about updates** to check about once a day and get an alert for new releases. **Check for updates** runs a manual check at any time.
 
 Tap **Open GitHub release** when a new version is available, download the signed APK, and open it to install through Android. An in-place update keeps your rules.
 

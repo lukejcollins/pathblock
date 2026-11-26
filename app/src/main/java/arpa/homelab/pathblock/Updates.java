@@ -35,9 +35,20 @@ public final class Updates extends JobService {
         return context.getSharedPreferences("updates", MODE_PRIVATE);
     }
 
+    static boolean canNotify(Context context) {
+        NotificationManager manager = context.getSystemService(NotificationManager.class);
+        NotificationChannel channel = manager.getNotificationChannel(CHANNEL);
+        return manager.areNotificationsEnabled()
+                && (channel == null || channel.getImportance() != NotificationManager.IMPORTANCE_NONE);
+    }
+
+    static boolean backgroundUpdatesEnabled(Context context) {
+        return settings(context).getBoolean(AUTO, true) && canNotify(context);
+    }
+
     static void schedule(Context context) {
         JobScheduler jobs = context.getSystemService(JobScheduler.class);
-        if (!settings(context).getBoolean(AUTO, true)) {
+        if (!backgroundUpdatesEnabled(context)) {
             jobs.cancel(JOB);
         } else if (jobs.getPendingJob(JOB) == null) {
             jobs.schedule(new JobInfo.Builder(JOB, new ComponentName(context, Updates.class))
@@ -107,11 +118,12 @@ public final class Updates extends JobService {
     }
 
     @Override public boolean onStartJob(JobParameters parameters) {
+        if (!backgroundUpdatesEnabled(this)) return false;
         worker = new Thread(() -> {
             try {
                 Release release = latest(this);
                 if (release != null && !Thread.currentThread().isInterrupted()
-                        && settings(this).getBoolean(AUTO, true)) notifyUpdate(release);
+                        && backgroundUpdatesEnabled(this)) notifyUpdate(release);
             } catch (Exception ignored) {
                 // The next scheduled check can retry without interrupting the user.
             } finally {

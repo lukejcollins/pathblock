@@ -2,7 +2,6 @@ package arpa.homelab.pathblock;
 
 import android.Manifest;
 import android.app.Activity;
-import android.app.NotificationManager;
 import android.content.ActivityNotFoundException;
 import android.content.Intent;
 import android.content.res.ColorStateList;
@@ -27,7 +26,7 @@ public final class UpdateSettings extends Activity {
     private TextView notes;
     private Button check;
     private Button releasePage;
-    private Button notificationSettings;
+    private Switch updateNotifications;
     private boolean requestedNotifications;
     private Updates.Release available;
 
@@ -68,27 +67,23 @@ public final class UpdateSettings extends Activity {
         card.setPadding(design.dp(16), design.dp(8), design.dp(16), design.dp(16));
         card.setBackground(design.shape(design.surface, 24));
         body.addView(card, new LinearLayout.LayoutParams(-1, -2));
-        Switch automatic = new Switch(this);
-        automatic.setText("Automatically check for updates");
-        automatic.setTextSize(16);
-        automatic.setTextColor(design.foreground);
-        automatic.setMinHeight(design.dp(56));
-        automatic.setSwitchPadding(design.dp(12));
-        automatic.setThumbTintList(new ColorStateList(new int[][]{
+        updateNotifications = new Switch(this);
+        updateNotifications.setText("Notify me about updates");
+        updateNotifications.setTextSize(16);
+        updateNotifications.setTextColor(design.foreground);
+        updateNotifications.setMinHeight(design.dp(56));
+        updateNotifications.setSwitchPadding(design.dp(12));
+        updateNotifications.setThumbTintList(new ColorStateList(new int[][]{
                 {android.R.attr.state_checked}, {}}, new int[]{design.accent, design.muted}));
-        automatic.setChecked(Updates.settings(this).getBoolean(Updates.AUTO, true));
-        card.addView(automatic, new LinearLayout.LayoutParams(-1, -2));
-        TextView summary = design.text("Contacts GitHub about once a day for release information. Download updates from GitHub Releases.", 14, design.muted, false);
+        card.addView(updateNotifications, new LinearLayout.LayoutParams(-1, -2));
+        TextView summary = design.text("When on, Pathblock checks GitHub about once a day and alerts you when an update is available.", 14, design.muted, false);
         card.addView(summary);
-        notificationSettings = design.button("", design.raised, design.foreground);
-        LinearLayout.LayoutParams notificationLayout = new LinearLayout.LayoutParams(-1, -2);
-        notificationLayout.topMargin = design.dp(12);
-        card.addView(notificationSettings, notificationLayout);
         requestedNotifications = Updates.settings(this).getBoolean("requested_notifications", false);
-        notificationSettings.setOnClickListener(view -> openNotificationSettings());
-        automatic.setOnCheckedChangeListener((view, enabled) -> {
+        updateNotifications.setOnClickListener(view -> {
+            boolean enabled = updateNotifications.isChecked();
             Updates.settings(this).edit().putBoolean(Updates.AUTO, enabled).apply();
-            Updates.schedule(this);
+            if (enabled && !Updates.canNotify(this)) openNotificationSettings();
+            refreshNotificationStatus();
         });
 
         check = design.button("Check for updates", design.raised, design.accent);
@@ -117,8 +112,8 @@ public final class UpdateSettings extends Activity {
     }
 
     private void refreshNotificationStatus() {
-        boolean enabled = getSystemService(NotificationManager.class).areNotificationsEnabled();
-        notificationSettings.setText(enabled ? "Update notifications · On" : "Update notifications · Off");
+        updateNotifications.setChecked(Updates.backgroundUpdatesEnabled(this));
+        Updates.schedule(this);
     }
 
     private void openNotificationSettings() {
