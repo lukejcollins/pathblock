@@ -65,12 +65,17 @@ def check_guard_setup():
     tap(app_info)
     wait(lambda: find("App info"), "Did not open Pathblock’s App info")
     shell("input", "keyevent", "KEYCODE_BACK")
-    tap(wait(lambda: find("Continue to step 3"), "Step two confirmation missing"))
 
     final_step = wait(lambda: find("Return to Accessibility"), "Step three action missing")
     assert final_step.get("enabled") == "true", "Step three was not unlocked"
     tap(final_step)
     wait(lambda: find("com.android.settings", "package"), "Did not return to Android Accessibility")
+    shell("input", "keyevent", "KEYCODE_BACK")
+    tap(wait(lambda: find("Reopen Pathblock App info"), "App info retry missing after step three"))
+    wait(lambda: find("App info"), "App info retry did not reopen Android Settings")
+    shell("input", "keyevent", "KEYCODE_BACK")
+    tap(wait(lambda: find("Return to Accessibility"), "Step three was unavailable after retry"))
+    wait(lambda: find("com.android.settings", "package"), "Did not reopen Android Accessibility")
     shell("settings", "put", "secure", "enabled_accessibility_services", APP + "/.ChromeGuard")
     shell("settings", "put", "secure", "accessibility_enabled", "1")
     shell("input", "keyevent", "KEYCODE_BACK")
