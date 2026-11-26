@@ -3,6 +3,7 @@ package arpa.homelab.pathblock;
 import android.Manifest;
 import android.app.Activity;
 import android.app.NotificationManager;
+import android.content.ActivityNotFoundException;
 import android.content.Intent;
 import android.content.res.ColorStateList;
 import android.content.pm.PackageManager;
@@ -25,7 +26,7 @@ public final class UpdateSettings extends Activity {
     private TextView status;
     private TextView notes;
     private Button check;
-    private Button install;
+    private Button releasePage;
     private Button notificationSettings;
     private boolean requestedNotifications;
     private Updates.Release available;
@@ -77,7 +78,7 @@ public final class UpdateSettings extends Activity {
                 {android.R.attr.state_checked}, {}}, new int[]{design.accent, design.muted}));
         automatic.setChecked(Updates.settings(this).getBoolean(Updates.AUTO, true));
         card.addView(automatic, new LinearLayout.LayoutParams(-1, -2));
-        TextView summary = design.text("Contacts GitHub about once a day for release information. Downloads start when you tap Download and install. Android asks you to confirm installation.", 14, design.muted, false);
+        TextView summary = design.text("Contacts GitHub about once a day for release information. Download updates from GitHub Releases.", 14, design.muted, false);
         card.addView(summary);
         notificationSettings = design.button("", design.raised, design.foreground);
         LinearLayout.LayoutParams notificationLayout = new LinearLayout.LayoutParams(-1, -2);
@@ -102,11 +103,11 @@ public final class UpdateSettings extends Activity {
         notes = design.text("", 14, design.foreground, false);
         notes.setVisibility(View.GONE);
         card.addView(notes);
-        install = design.button("Download and install", design.raised, design.accent);
-        card.addView(install);
-        install.setVisibility(Button.GONE);
+        releasePage = design.button("Open GitHub release", design.raised, design.accent);
+        card.addView(releasePage);
+        releasePage.setVisibility(Button.GONE);
         check.setOnClickListener(view -> check());
-        install.setOnClickListener(view -> download());
+        releasePage.setOnClickListener(view -> openReleasePage());
         check();
     }
 
@@ -139,7 +140,7 @@ public final class UpdateSettings extends Activity {
 
     private void check() {
         check.setEnabled(false);
-        install.setVisibility(Button.GONE);
+        releasePage.setVisibility(Button.GONE);
         notes.setVisibility(View.GONE);
         status.setVisibility(View.VISIBLE);
         status.setText("Checking for updates…");
@@ -154,7 +155,7 @@ public final class UpdateSettings extends Activity {
                     if (release != null) {
                         notes.setText(release.notes());
                         notes.setVisibility(release.notes().trim().isEmpty() ? View.GONE : View.VISIBLE);
-                        install.setVisibility(Button.VISIBLE);
+                        releasePage.setVisibility(Button.VISIBLE);
                     }
                 });
             } catch (Exception error) {
@@ -163,38 +164,19 @@ public final class UpdateSettings extends Activity {
         }, "Pathblock manual update check").start();
     }
 
-    private void download() {
-        if (!getPackageManager().canRequestPackageInstalls()) {
-            status.setText("Allow installations from Pathblock, then tap Download and install again.");
-            startActivity(new Intent(Settings.ACTION_MANAGE_UNKNOWN_APP_SOURCES,
-                    Uri.parse("package:" + getPackageName())));
-            return;
+    private void openReleasePage() {
+        if (available == null) return;
+        try {
+            startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse(available.pageUrl())));
+        } catch (ActivityNotFoundException error) {
+            status.setText("No app could open the GitHub release.");
         }
-        Updates.Release release = available;
-        if (release == null) return;
-        check.setEnabled(false);
-        install.setEnabled(false);
-        status.setText("Downloading version " + release.version() + "…");
-        new Thread(() -> {
-            try {
-                UpdateInstall.stage(this, release);
-                runOnUiThread(() -> {
-                    if (isDestroyed()) return;
-                    check.setEnabled(true);
-                    install.setEnabled(true);
-                    status.setText("Confirm the update in Android’s installer.");
-                });
-            } catch (Exception error) {
-                showError(error, "Could not install the update.");
-            }
-        }, "Pathblock update download").start();
     }
 
     private void showError(Exception error, String fallback) {
         runOnUiThread(() -> {
             if (isDestroyed()) return;
             check.setEnabled(true);
-            install.setEnabled(true);
             status.setText(error instanceof IOException ? error.getMessage() : fallback);
         });
     }

@@ -28,7 +28,7 @@ public final class Updates extends JobService {
     private static final String REPO = "lukejcollins/pathblock";
     private static final int NOTIFICATION = 851;
     private static final String CHANNEL = "updates";
-    record Release(String version, String notes, String url) {}
+    record Release(String version, String notes, String pageUrl) {}
     private Thread worker;
 
     static SharedPreferences settings(Context context) {
@@ -85,7 +85,8 @@ public final class Updates extends JobService {
             for (int i = 0; i < assets.length(); i++) {
                 JSONObject asset = assets.getJSONObject(i);
                 if (filename.equals(asset.optString("name")) && expected.equals(asset.optString("browser_download_url"))) {
-                    return new Release(version, json.optString("body"), expected);
+                    return new Release(version, json.optString("body"),
+                            "https://github.com/" + REPO + "/releases/tag/" + tag);
                 }
             }
             throw new IOException("The latest release has no Pathblock APK.");
