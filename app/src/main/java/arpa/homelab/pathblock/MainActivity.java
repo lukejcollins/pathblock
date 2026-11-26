@@ -47,8 +47,7 @@ public final class MainActivity extends Activity {
     private static final String GUARD_SETUP_DESTINATION = "guard_setup_destination";
     private static final int TRY_ACCESSIBILITY = 1;
     private static final int OPEN_APP_INFO = 2;
-    private static final int CONFIRM_APP_INFO = 3;
-    private static final int ENABLE_ACCESSIBILITY = 4;
+    private static final int ENABLE_ACCESSIBILITY = 3;
     private int guardSetupDestination;
 
     private static final long PAUSE_DELAY_MS = 10_000;
@@ -235,7 +234,7 @@ public final class MainActivity extends Activity {
                 if (destination == TRY_ACCESSIBILITY) {
                     setGuardSetupStep(OPEN_APP_INFO);
                 } else if (destination == OPEN_APP_INFO && guardSetupStep() == OPEN_APP_INFO) {
-                    setGuardSetupStep(CONFIRM_APP_INFO);
+                    setGuardSetupStep(ENABLE_ACCESSIBILITY);
                 }
                 showGuardSetup();
             }
@@ -338,20 +337,12 @@ public final class MainActivity extends Activity {
                 () -> openGuardSetupSettings(dialog, accessibility, TRY_ACCESSIBILITY));
         addGuardSetupStep(content, "2. Allow restricted settings",
                 "In Pathblock’s App info, open the three-dot menu and tap Allow restricted settings if it appears. Then go back to Pathblock.",
-                "Open Pathblock App info", step >= OPEN_APP_INFO,
+                step >= ENABLE_ACCESSIBILITY ? "Reopen Pathblock App info" : "Open Pathblock App info",
+                step >= OPEN_APP_INFO,
                 () -> openGuardSetupSettings(dialog, appInfo, OPEN_APP_INFO));
-        if (step == CONFIRM_APP_INFO) {
-            Button confirm = design.button("Continue to step 3", design.raised, design.accent);
-            spaced(content, confirm, 8);
-            confirm.setOnClickListener(view -> {
-                setGuardSetupStep(ENABLE_ACCESSIBILITY);
-                dialog.dismiss();
-                showGuardSetup();
-            });
-        }
         addGuardSetupStep(content, "3. Turn on Chrome guard",
-                "Return to Accessibility and turn on Pathblock for Chrome. The guard status updates automatically when you come back.",
-                "Return to Accessibility", step == ENABLE_ACCESSIBILITY,
+                "Return to Accessibility and turn on Pathblock for Chrome. If it is still restricted, reopen Pathblock App info above.",
+                "Return to Accessibility", step >= ENABLE_ACCESSIBILITY,
                 () -> openGuardSetupSettings(dialog, accessibility, ENABLE_ACCESSIBILITY));
 
         Button off = design.button("Turn off monitoring", design.surface, design.foreground);
