@@ -364,11 +364,16 @@ public final class MainActivity extends Activity {
         heading.setAccessibilityHeading(true);
         spaced(content, heading, 14);
         spaced(content, design.text(description, 14, design.muted, false), 4);
-        boolean enabled = step <= currentStep;
+        boolean active = step == currentStep;
         boolean completed = step < currentStep;
-        int fill = completed ? design.secondaryButton : design.raised;
-        int textColor = completed ? design.foreground : design.accent;
-        Button button = design.button(action, fill, enabled ? textColor : design.muted);
+        boolean enabled = active || completed;
+        int textColor = active ? design.background : design.muted;
+        Button button = design.button(action, active ? design.accent : design.raised, textColor);
+        if (completed) {
+            button.setBackground(design.outlinedButton());
+            button.setTextColor(design.foreground);
+        }
+        button.setStateListAnimator(null);
         button.setAlpha(enabled ? 1f : .55f);
         button.setEnabled(enabled);
         spaced(content, button, 8);
