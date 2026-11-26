@@ -18,7 +18,6 @@ final class Design {
     final int background = Color.rgb(15, 20, 23);
     final int surface = Color.rgb(25, 32, 36);
     final int raised = Color.rgb(37, 48, 52);
-    final int secondaryButton = Color.rgb(32, 41, 45);
     final int foreground = Color.rgb(230, 238, 236);
     final int muted = Color.rgb(174, 190, 186);
     final int danger = Color.rgb(255, 180, 171);
@@ -45,6 +44,13 @@ final class Design {
     RippleDrawable ripple(int fill, int radius) {
         return new RippleDrawable(ColorStateList.valueOf(0x33ffffff),
                 shape(fill, radius), shape(Color.WHITE, radius));
+    }
+
+    RippleDrawable outlinedButton() {
+        GradientDrawable outline = shape(surface, 24);
+        outline.setStroke(dp(1), muted);
+        return new RippleDrawable(ColorStateList.valueOf(0x33ffffff),
+                outline, shape(Color.WHITE, 24));
     }
 
     LinearLayout column() {
